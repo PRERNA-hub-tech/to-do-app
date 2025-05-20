@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>To-Do App</title>
+    <body>
+    
+    
+</body>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+        h1 { text-align: center; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 8px; background: #f0f0f0; margin-bottom: 5px; border-radius: 4px; }
+        input, button { padding: 10px; font-size: 16px; }
+        input { width: 70%; }
+        button { width: 25%; }
+    </style>
+</head>
+<body>
+    <h1> To-Do List</h1>
+
+    <input id="taskTitle" type="text" placeholder="Enter new task" />
+    <button onclick="addTask()">Add Task</button>
+
+    <ul id="taskList"></ul>
+    <h1>My To-Do List</h1>
+    <ul id="task-list"></ul>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000/api/tasks/';
+
+        // Fetch and display tasks
+        function loadTasks() {
+            fetch(API_URL)
+                .then(response => response.json())
+                .then(data => {
+                    const list = document.getElementById('taskList');
+                    list.innerHTML = '';
+                    data.forEach(task => {
+                        const li = document.createElement('li');
+                        li.textContent = task.title + (task.completed ? ' ✅' : '');
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        // Add new task
+        function addTask() {
+            const titleInput = document.getElementById('taskTitle');
+            const title = titleInput.value.trim();
+            if (!title) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title, completed: false })
+            })
+            .then(response => {
+                if (response.ok) {
+                    titleInput.value = '';
+                    loadTasks();
+                } else {
+                    alert('Error adding task');
+                }
+            });
+        }
+        
+ 
+
+function loadTasks() {
+    fetch(API_URL)
+        .then(response => response.json())
+        .then(tasks => renderTasks(tasks));
+}
+
+function renderTasks(tasks) {
+    const taskList = document.getElementById('task-list');
+    taskList.innerHTML = '';
+
+    tasks.forEach(task => {
+        const li = document.createElement('li');
+
+        // ✅ task complete hai to emoji dikhaye
+        li.textContent = (task.completed ? "✅ " : "") + task.title;
+
+        // styling
+        if (task.completed) {
+            
+            li.style.color = 'gray';
+        } else {
+            li.style.textDecoration = 'none';
+            li.style.color = 'black';
+        }
+
+        // click se toggle
+        li.addEventListener('click', () => {
+            const updatedTask = {
+                ...task,
+                completed: !task.completed
+            };
+
+            fetch(`http://127.0.0.1:8000/api/tasks/${task.id}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedTask)
+            })
+            .then(response => response.json())
+            .then(() => {
+                loadTasks(); // reload UI
+            });
+        });
+
+        taskList.appendChild(li);
+    });
+}
+
+        // Load tasks on page load
+        loadTasks();
+    </script>
+</body>
+</html>
